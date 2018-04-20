@@ -1,3 +1,6 @@
+build/*
+*.local.*
+
 # Created by https://www.gitignore.io/api/osx,linux,windows,composer,phpcodesniffer,visualstudiocode
 
 ### Composer ###
