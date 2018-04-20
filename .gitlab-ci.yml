@@ -1,0 +1,65 @@
+# Select image from https://hub.docker.com/_/php/
+image: php:7.1.16
+
+# Define our stages
+stages:
+  - test
+  - deploy
+
+# Select what we should cache between builds
+cache:
+  paths:
+  - vendor/
+
+# What we want execute BEFORE the jobs
+before_script:
+- apt-get update -yqq
+- apt-get install -yqq git libmcrypt-dev libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev
+# Install PHP extensions
+- docker-php-ext-install mbstring mcrypt pdo_pgsql curl json intl gd xml zip bz2 opcache
+# Install & enable Xdebug for code coverage reports
+- pecl install xdebug
+- docker-php-ext-enable xdebug
+# Install and run Composer
+- curl -sS https://getcomposer.org/installer | php
+- php composer.phar install
+
+# Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
+# See http://docs.gitlab.com/ce/ci/services/README.html for examples.
+services:
+  - mariadb:10.2
+
+# Set any variables we need
+variables:
+  # Configure mariadb environment variables (https://hub.docker.com/r/_/mariadb/)
+  MYSQL_ROOT_PASSWORD: toor
+  MYSQL_DATABASE: testdb
+  MYSQL_USER: testuser
+  MYSQL_PASSWORD: testpass
+
+# Run our tests
+# If Xdebug was installed you can generate a coverage report and see code coverage metrics.
+test:
+  script:
+  - vendor/bin/phpunit --configuration phpunit.xml --coverage-text --colors=never
+
+# DEPLOY
+deploy_demo:
+  stage: deploy
+  script:
+    # Update package sources
+    - apt-get -qq update -y
+    - apt-get -qq install -y openssh-client
+    # run ssh-agent
+    - eval $(ssh-agent -s)
+    # add ssh key from ci secrets envars
+    - ssh-add - <<<"$SSH_KEY_DEMO"
+    - ssh -o StrictHostKeyChecking=no $SSH_USER_DEMO@demo.firegarden.co
+    - ssh $SSH_USER_DEMO@demo.firegarden.co sh deploy-demo.sh
+    - echo yay
+  environment:
+    name: demo
+    url: https://demo.firegarden.co
+  # when: manual
+  only:
+  - master
