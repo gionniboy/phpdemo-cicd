@@ -9,23 +9,20 @@ cache:
   paths:
   - vendor/
 
-.mariadb_services:
-  # Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
-  # See http://docs.gitlab.com/ce/ci/services/README.html for examples.
-  services: &mariadb_definition
-  - mariadb:10.2
-
-  variables:
-    # Configure mariadb service https://hub.docker.com/_/mariadb/
-    MYSQL_ROOT_PASSWORD: toor
-    MYSQL_DATABASE: testdb
-    MYSQL_USER: testuser
-    MYSQL_PASSWORD: testpass
-
 # Template for test jobs
 .job_template: &job_definition
   stage: test
+  services:
+    # Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
+    # See http://docs.gitlab.com/ce/ci/services/README.html for examples.
+    - mariadb:10.2
 
+    variables:
+      # Configure mariadb service https://hub.docker.com/_/mariadb/
+      MYSQL_ROOT_PASSWORD: toor
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
 
   # What we want execute BEFORE the jobs
   before_script:
@@ -52,7 +49,6 @@ cache:
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 test:php7.0:
   <<: *job_definition
-  services: *mariadb_definition
   stage: test
   # Select image from https://hub.docker.com/_/php/
   image: php:7.0.29
@@ -67,7 +63,6 @@ test:php7.0:
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 test:php7.1:
   <<: *job_definition
-  services: *mariadb_definition
   stage: test
   # Select image from https://hub.docker.com/_/php/
   image: php:7.1.16
@@ -80,7 +75,6 @@ test:php7.1:
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 test:php7.2:
   <<: *job_definition
-  services: *mariadb_definition
   stage: test
   # Select image from https://hub.docker.com/_/php/
   image: php:7.2.4
