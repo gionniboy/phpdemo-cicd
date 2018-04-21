@@ -4,7 +4,8 @@ stages:
   - deploy
 
 # Select what we should cache between builds
-cache: my-little-vendor-cache
+cache:
+  key: my-little-vendor-cache
   paths:
   - vendor/
 
@@ -90,7 +91,7 @@ test:php7.2:
 
 pages:
   image: alpine:latest
-  stages: deploy
+  stage: deploy
   dependencies:
     - test:php7.1
   script:
