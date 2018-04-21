@@ -30,7 +30,7 @@ require __DIR__ . '/../../vendor/autoload.php';
 session_start();
 
 // Instantiate the app
-$settings = require __DIR__ . '/../src/settings.php';
+$settings = require __DIR__ . '/../src/settings.local.php';
 $app = new App($settings);
 
 // Inject Dependencies

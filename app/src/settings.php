@@ -4,19 +4,15 @@
  * Settings file - customize where needed
  */
 return [
-    'app' => [
-        'url' => '__APP_URL__',
-    ],
     'settings' => [
-        'debug' => 'false',
+        'debug' => '__DEBUG__',
         'logger' => [
             'name' => 'demo',
             'path' => __DIR__ . '/../log/demo.log',
-            'level' => \Monolog\Logger::DEBUG,
+            'level' => \Monolog\Logger::INFO,
         ],
-        'displayErrorDetails' => 'false',
         'database' => [
-            'driver' => 'mysql',
+            'driver' => '__DB_DRIVER__',
             'host' => '__DB_HOST__',
             'database' => '__DB_NAME__',
             'username' => '__DB_USER__',
@@ -25,8 +21,5 @@ return [
             'collation' => 'utf8_unicode_ci',
             'prefix' => '',
         ],
-        'security' => [
-            'cors_domain' => '__CORS_DOMAIN__'
-        ]
     ],
 ];

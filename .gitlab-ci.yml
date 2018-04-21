@@ -1,61 +1,122 @@
-# Select image from https://hub.docker.com/_/php/
-image: php:7.1.16
-
 # Define our stages
 stages:
   - test
   - deploy
 
 # Select what we should cache between builds
-cache:
+cache: my-little-vendor-cache
   paths:
   - vendor/
 
-# What we want execute BEFORE the jobs
-before_script:
-- apt-get update -yqq
-- apt-get install -yqq git libmcrypt-dev libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev
-# Install PHP extensions
-- docker-php-ext-install mbstring mcrypt pdo_pgsql curl json intl gd xml zip bz2 opcache
-# Install & enable Xdebug for code coverage reports
-- pecl install xdebug
-- docker-php-ext-enable xdebug
-# Install and run Composer
-- curl -sS https://getcomposer.org/installer | php
-- php composer.phar install
-
-# Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
-# See http://docs.gitlab.com/ce/ci/services/README.html for examples.
-services:
+.mariadb_services:
+  # Bring in any services we need http://docs.gitlab.com/ee/ci/docker/using_docker_images.html#what-is-a-service
+  # See http://docs.gitlab.com/ce/ci/services/README.html for examples.
+  services: &mariadb_definition
   - mariadb:10.2
 
-# Set any variables we need
-variables:
-  # Configure mariadb environment variables (https://hub.docker.com/r/_/mariadb/)
-  MYSQL_ROOT_PASSWORD: toor
-  MYSQL_DATABASE: testdb
-  MYSQL_USER: testuser
-  MYSQL_PASSWORD: testpass
+  variables:
+    # Configure mariadb service https://hub.docker.com/_/mariadb/
+    MYSQL_ROOT_PASSWORD: toor
+    MYSQL_DATABASE: testdb
+    MYSQL_USER: testuser
+    MYSQL_PASSWORD: testpass
+
+# Template for test jobs
+.job_template: &job_definition
+  stage: test
+  services: *mariadb_definition
+
+  # What we want execute BEFORE the jobs
+  before_script:
+    - apt-get update -yqq
+    - apt-get install -yqq git libmcrypt-dev libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev
+    # Install PHP extensions
+    - docker-php-ext-install mbstring mcrypt pdo_pgsql pdo_mysql curl json intl gd xml zip bz2 opcache
+    # Install & enable Xdebug for code coverage reports
+    - pecl install xdebug
+    - docker-php-ext-enable xdebug
+    # Install and run Composer
+    - curl -sS https://getcomposer.org/installer | php
+    - php composer.phar install
+    # Set mysql connection parameters
+    - cp app/src/settings.php app/src/settings.local.php
+    - sed -i "s/INFO/DEBUG/g;s/__DEBUG__/true/g;s/__DB_DRIVER__/mysql/g;s/__DB_HOST__/mariadb/g;s/__DB_NAME__/testdb/g;s/__DB_USER__/testuser/g;s/__DB_PASS__/testpass/g" app/src/settings.local.php
+    # load db data
+    - mysql -u testuser -ptestpass -h mariadb testdb < sql/struct.sql
+    - mysql -u testuser -ptestpass -h mariadb testdb < sql/sample_data.sql
+    # run php builtin -> TODO: nginx+php-fpm
+    - php -S 0.0.0.0:8080 -t app/public/ >/dev/null 2>&1 &
 
 # Run our tests
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
-test:
-  script:
-  - vendor/bin/phpunit --configuration phpunit.xml --coverage-text --colors=never
+test:php7.0:
+  <<: *job_definition
+  stage: test
+  # Select image from https://hub.docker.com/_/php/
+  image: php:7.0.29
 
-# DEPLOY
+  script:
+    - php vendor/bin/phpmd app/src text phpmd.xml
+    - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
+    - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
+
+  allow_failure: true
+
+# If Xdebug was installed you can generate a coverage report and see code coverage metrics.
+test:php7.1:
+  <<: *job_definition
+  stage: test
+  # Select image from https://hub.docker.com/_/php/
+  image: php:7.1.16
+
+  script:
+    - php vendor/bin/phpmd app/src text phpmd.xml
+    - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
+    - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
+
+# If Xdebug was installed you can generate a coverage report and see code coverage metrics.
+test:php7.2:
+  <<: *job_definition
+  stage: test
+  # Select image from https://hub.docker.com/_/php/
+  image: php:7.2.4
+
+  script:
+    - php vendor/bin/phpmd app/src text phpmd.xml
+    - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
+    - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
+
+  allow_failure: true
+
+pages:
+  image: alpine:latest
+  stages: deploy
+  dependencies:
+    - test:php7.1
+  script:
+    - echo "gitlab pages on plain-html"
+    - mkdir -p public
+    - cp -rv build/* public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - master
+
+  allow_failure: true
+
 deploy_demo:
   stage: deploy
+  image: alpine:latest
   script:
-    # Update package sources
-    - apt-get -qq update -y
-    - apt-get -qq install -y openssh-client
+    - apk update
+    - apk add openssh-client git
     # run ssh-agent
     - eval $(ssh-agent -s)
     # add ssh key from ci secrets envars
     - ssh-add - <<<"$SSH_KEY_DEMO"
-    - ssh -o StrictHostKeyChecking=no $SSH_USER_DEMO@demo.firegarden.co
-    - ssh $SSH_USER_DEMO@demo.firegarden.co sh deploy-demo.sh
+    - ssh -o StrictHostKeyChecking=no -p $SSH_PORT_DEMO $SSH_USER_DEMO@demo.firegarden.co sh deploy-demo.sh
     - echo yay
   environment:
     name: demo
