@@ -121,7 +121,10 @@ deploy_demo:
     # run ssh-agent
     - eval $(ssh-agent -s)
     # add ssh key from ci secrets envars
-    - echo "$SSH_KEY_DEMO" | tr -d '\r' | ssh-add - > /dev/null
+    # RSA Key
+    - ssh-add - <<<"$SSH_KEY_DEMO"
+    # ECDSA key
+    # - echo "$SSH_KEY_DEMO" | tr -d '\r' | ssh-add - > /dev/null
     - ssh -o StrictHostKeyChecking=no -p $SSH_PORT_DEMO $SSH_USER_DEMO@demo.firegarden.co sh deploy-demo.sh
     - echo yay
   environment:
