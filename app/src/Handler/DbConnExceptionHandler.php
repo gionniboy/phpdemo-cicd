@@ -35,6 +35,7 @@ class DbConnExceptionHandler implements ExceptionHandler
      */
     public function render($request, \Exception $err)
     {
+        unset($request);
         throw $err;
     }
 
@@ -48,6 +49,7 @@ class DbConnExceptionHandler implements ExceptionHandler
      */
     public function renderForConsole($output, \Exception $err)
     {
+        unset($output);
         throw $err;
     }
 }

@@ -27,9 +27,9 @@ cache:
   # What we want execute BEFORE the jobs
   before_script:
     - apt-get update -yqq
-    - apt-get install -yqq git mysql-client libmcrypt-dev libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev
+    - apt-get install -yqq git mysql-client libmcrypt-dev libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev  >/dev/null 2>&1 &
     # Install PHP extensions
-    - docker-php-ext-install mbstring mcrypt pdo_pgsql pdo_mysql curl json intl gd xml zip bz2 opcache
+    - docker-php-ext-install mbstring pdo_pgsql pdo_mysql curl json intl gd xml zip bz2 opcache
     # Install & enable Xdebug for code coverage reports
     - pecl install xdebug
     - docker-php-ext-enable xdebug
@@ -45,18 +45,18 @@ cache:
     # run php builtin -> TODO: nginx+php-fpm
     - php -S 0.0.0.0:8080 -t app/public/ >/dev/null 2>&1 &
 
-# Run our tests
-# If Xdebug was installed you can generate a coverage report and see code coverage metrics.
-test:php7.0:
-  <<: *job_definition
-  stage: test
-  # Select image from https://hub.docker.com/_/php/
-  image: php:7.0.29
+# # Run our tests
+# # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
+# test:php7.0:
+#   <<: *job_definition
+#   stage: test
+#   # Select image from https://hub.docker.com/_/php/
+#   image: php:7.0.29
 
-  script:
-    - php vendor/bin/phpmd app/src text phpmd.xml
-    - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
-    - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
+#   script:
+#     - php vendor/bin/phpmd app/src text phpmd.xml
+#     - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
+#     - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
 
   allow_failure: true
 
@@ -72,17 +72,17 @@ test:php7.1:
     - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
     - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
 
-# If Xdebug was installed you can generate a coverage report and see code coverage metrics.
-test:php7.2:
-  <<: *job_definition
-  stage: test
-  # Select image from https://hub.docker.com/_/php/
-  image: php:7.2.4
+# # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
+# test:php7.2:
+#   <<: *job_definition
+#   stage: test
+#   # Select image from https://hub.docker.com/_/php/
+#   image: php:7.2.4
 
-  script:
-    - php vendor/bin/phpmd app/src text phpmd.xml
-    - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
-    - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
+#   script:
+#     - php vendor/bin/phpmd app/src text phpmd.xml
+#     - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
+#     - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
 
   allow_failure: true
 
@@ -106,10 +106,10 @@ pages:
 
 deploy_demo:
   stage: deploy
-  image: alpine:latest
+  image: debian:9.4-slim
   script:
-    - apk update
-    - apk add openssh-client git
+    - apt-get -qq update -y
+    - apt-get -qq install -y openssh-client git
     # run ssh-agent
     - eval $(ssh-agent -s)
     # add ssh key from ci secrets envars
