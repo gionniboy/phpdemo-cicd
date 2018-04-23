@@ -58,7 +58,7 @@ cache:
 #     - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
 #     - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
 
-  allow_failure: true
+#   allow_failure: true
 
 # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 test:php7.1:
@@ -71,6 +71,12 @@ test:php7.1:
     - php vendor/bin/phpmd app/src text phpmd.xml
     - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
     - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
+  artifacts:
+    paths:
+    - build/
+  only:
+    - master
+    - devel
 
 # # If Xdebug was installed you can generate a coverage report and see code coverage metrics.
 # test:php7.2:
@@ -83,8 +89,10 @@ test:php7.1:
 #     - php vendor/bin/phpmd app/src text phpmd.xml
 #     - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
 #     - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
-
-  allow_failure: true
+#   artifacts:
+#     paths:
+#     - build/
+#   allow_failure: true
 
 pages:
   image: alpine:latest
