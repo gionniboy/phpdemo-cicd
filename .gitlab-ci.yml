@@ -26,8 +26,8 @@ cache:
 
   # What we want execute BEFORE the jobs
   before_script:
-    - apt-get update -yqq < /dev/null
-    - apt-get install -yqq git mysql-client libmcrypt-dev libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev  >/dev/null 2>&1 &
+    - apt-get update -yqq > /dev/null
+    - apt-get install -yqq git mysql-client libmcrypt-devlibcurl4-gnutls-dev >/dev/null 2>&1 &
     # Install PHP extensions
     - docker-php-ext-install mbstring pdo_pgsql pdo_mysql curl json intl gd xml zip bz2 opcache > /dev/null
     # Install & enable Xdebug for code coverage reports
@@ -98,6 +98,7 @@ deploy_demo:
   stage: deploy
   image: debian:9.4-slim
   script:
+    - apt-get -qq update -y > /dev/null
     - apt-get -qq update -y
     - apt-get -qq install -y openssh-client git > /dev/null
     # run ssh-agent
