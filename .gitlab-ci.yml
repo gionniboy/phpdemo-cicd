@@ -26,10 +26,10 @@ cache:
 
   # What we want execute BEFORE the jobs
   before_script:
-    - apt-get update -yqq
+    - apt-get update -yqq < /dev/null
     - apt-get install -yqq git mysql-client libmcrypt-dev libpq-dev libcurl4-gnutls-dev libicu-dev libvpx-dev libjpeg-dev libpng-dev libxpm-dev zlib1g-dev libfreetype6-dev libxml2-dev libexpat1-dev libbz2-dev libgmp3-dev libldap2-dev unixodbc-dev libsqlite3-dev libaspell-dev libsnmp-dev libpcre3-dev libtidy-dev  >/dev/null 2>&1 &
     # Install PHP extensions
-    - docker-php-ext-install mbstring pdo_pgsql pdo_mysql curl json intl gd xml zip bz2 opcache
+    - docker-php-ext-install mbstring pdo_pgsql pdo_mysql curl json intl gd xml zip bz2 opcache > /dev/null
     # Install & enable Xdebug for code coverage reports
     - pecl install xdebug
     - docker-php-ext-enable xdebug
@@ -40,8 +40,8 @@ cache:
     - cp app/src/settings.php app/src/settings.local.php
     - sed -i "s/INFO/DEBUG/g;s/__DEBUG__/true/g;s/__DB_DRIVER__/mysql/g;s/__DB_HOST__/mariadb/g;s/__DB_NAME__/testdb/g;s/__DB_USER__/testuser/g;s/__DB_PASS__/testpass/g" app/src/settings.local.php
     # load db data
-    - mysql -u testuser -ptestpass -h mariadb testdb < sql/struct.sql
-    - mysql -u testuser -ptestpass -h mariadb testdb < sql/sample_data.sql
+    - mysql -u $MYSQL_USER --password="$MYSQL_PASSWORD" -h mariadb $MYSQL_DATABASE < sql/struct.sql
+    - mysql -u $MYSQL_USER --password="$MYSQL_PASSWORD" -h mariadb $MYSQL_DATABASE < sql/sample_data.sql
     # run php builtin -> TODO: nginx+php-fpm
     - php -S 0.0.0.0:8080 -t app/public/ >/dev/null 2>&1 &
 
@@ -94,35 +94,17 @@ test:php7.1:
 #     - build/
 #   allow_failure: true
 
-pages:
-  image: alpine:latest
-  stage: deploy
-  dependencies:
-    - test:php7.1
-  script:
-    - echo "gitlab pages on plain-html"
-    - mkdir -p public
-    - cp -rv build/* public/
-  artifacts:
-    paths:
-      - public
-    expire_in: 30 days
-  only:
-    - master
-
-  allow_failure: true
-
 deploy_demo:
   stage: deploy
   image: debian:9.4-slim
   script:
     - apt-get -qq update -y
-    - apt-get -qq install -y openssh-client git
+    - apt-get -qq install -y openssh-client git > /dev/null
     # run ssh-agent
     - eval $(ssh-agent -s)
     # add ssh key from ci secrets envars
     # RSA Key
-    - ssh-add - <<<"$SSH_KEY_DEMO"
+    - ssh-add - <<<"$SSH_KEY_DEMO" > /dev/null
     # ECDSA key
     # - echo "$SSH_KEY_DEMO" | tr -d '\r' | ssh-add - > /dev/null
     - ssh -o StrictHostKeyChecking=no -p $SSH_PORT_DEMO $SSH_USER_DEMO@demo.firegarden.co sh deploy-demo.sh > /dev/null
