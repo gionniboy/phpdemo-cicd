@@ -108,7 +108,7 @@ deploy_demo:
     - ssh-add - <<<"$SSH_KEY_DEMO" > /dev/null
     # ECDSA key
     # - echo "$SSH_KEY_DEMO" | tr -d '\r' | ssh-add - > /dev/null
-    - ssh -o StrictHostKeyChecking=no -p $SSH_PORT_DEMO $SSH_USER_DEMO@demo.firegarden.co sh deploy-demo.sh > /dev/null
+    - ssh -o StrictHostKeyChecking=no -p $SSH_PORT_DEMO $SSH_USER_DEMO@demo.firegarden.co sh deploy-demo.sh &>/dev/null
     - echo yay
   environment:
     name: demo
