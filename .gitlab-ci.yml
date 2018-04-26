@@ -68,9 +68,9 @@ test:php7.1:
   image: php:7.1.16
 
   script:
-    - php vendor/bin/phpmd app/src text phpmd.xml
+    - php vendor/bin/phpmd app/src html phpmd.xml
     - php vendor/bin/phpmetrics --report-html=build/phpmetric-report app/src
-    - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-text --colors=never
+    - php vendor/bin/phpunit --configuration phpunit_ci.xml --coverage-html --colors=never
   artifacts:
     paths:
     - build/
