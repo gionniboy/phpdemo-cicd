@@ -31,14 +31,14 @@ cache:
     # Install PHP extensions
     - docker-php-ext-install mbstring pdo_pgsql pdo_mysql curl json intl gd xml zip bz2 opcache > /dev/null
     # Install & enable Xdebug for code coverage reports
-    - pecl install xdebug
+    - pecl install xdebug >/dev/null
     - docker-php-ext-enable xdebug
     # Install and run Composer
     - curl -sS https://getcomposer.org/installer | php
     - php composer.phar install
     # Set mysql connection parameters
     - cp app/src/settings.php app/src/settings.local.php
-    - sed -i "s/INFO/DEBUG/g;s/__DEBUG__/true/g;s/__DB_DRIVER__/mysql/g;s/__DB_HOST__/mariadb/g;s/__DB_NAME__/testdb/g;s/__DB_USER__/testuser/g;s/__DB_PASS__/testpass/g" app/src/settings.local.php
+    - sed -i "s/INFO/DEBUG/g;s/__DEBUG__/true/g;s/__DB_DRIVER__/mysql/g;s/__DB_HOST__/mariadb/g;s/__DB_NAME__/"$MYSQL_DATABASE"/g;s/__DB_USER__/"$MYSQL_USER"/g;s/__DB_PASS__/"$MYSQL_PASSWORD"/g" app/src/settings.local.php
     # load db data
     - mysql -u $MYSQL_USER --password="$MYSQL_PASSWORD" -h mariadb $MYSQL_DATABASE < sql/struct.sql
     - mysql -u $MYSQL_USER --password="$MYSQL_PASSWORD" -h mariadb $MYSQL_DATABASE < sql/sample_data.sql
